@@ -6,6 +6,7 @@
  */
 import {Cacher} from './cacher.js'
 import {FileCacher} from './fileCacher.js'
+import {RedisCacher} from './redisCacher.js'
 
 /**
  * [wrapper 包装器]
@@ -19,8 +20,10 @@ export default function wrapper(instance, option) {
 
   if (process.env.AXIOS_PROXY_CACHE_MEMORY == 1) {
     cacher = new Cacher(option)
-  } else {
+  } else if (process.env.AXIOS_PROXY_CACHE_FILE == 1) {
     cacher = new FileCacher(option)
+  } else {
+    cacher = new RedisCacher(option)
   }
 
   const unCacheMethods = [
