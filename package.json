@@ -40,6 +40,7 @@
     "redis": "^2.8.0",
     "regenerator-runtime": "^0.10.5",
     "webpack": "^3.0.0",
-    "webpack-node-externals": "^1.6.0"
+    "webpack-node-externals": "^1.6.0",
+    "parse-cache-control": "^1.0.1"
   }
 }

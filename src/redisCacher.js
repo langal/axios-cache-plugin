@@ -16,7 +16,7 @@ export class RedisCacher {
     this.ttl = this.option.ttl || 3600
     this.filters = []
     this.excludeHeaders = this.option.excludeHeaders || false
-    this.redisClient = redis.createClient();
+    this.redisClient = redis.createClient(option);
     self = this
   }
 
@@ -45,9 +45,10 @@ export class RedisCacher {
    * @param {[any]} value
    */
   setCache(key, value) {
+    console.log(key)
     if(this.excludeHeaders) delete key.headers
     const response = {data: value.data, status: value.status, statusText: value.statusText, headers: value.headers}
-    self.redisClient.set(this.getCacheKey(key), JSON.stringify(response), 'EX', self.ttl)
+    self.redisClient.set(this.getCacheKey(key), JSON.stringify(response), 'EX', key.ttl || self.ttl)
   }
 
   /**

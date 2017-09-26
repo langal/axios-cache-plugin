@@ -7,6 +7,8 @@
 import {Cacher} from './cacher.js'
 import {FileCacher} from './fileCacher.js'
 import {RedisCacher} from './redisCacher.js'
+const parseCacheControl = require('parse-cache-control')
+
 
 /**
  * [wrapper 包装器]
@@ -18,12 +20,16 @@ export default function wrapper(instance, option) {
 
   let cacher
 
-  if (process.env.AXIOS_PROXY_CACHE_MEMORY == 1) {
+  if (!option.backend) {
     cacher = new Cacher(option)
-  } else if (process.env.AXIOS_PROXY_CACHE_FILE == 1) {
-    cacher = new FileCacher(option)
   } else {
-    cacher = new RedisCacher(option)
+    if (option.backend === 'redis') {
+      cacher = new RedisCacher(option)
+    } else if (option.backend === 'file') {
+      cacher = new FileCacher(option)
+    } else {
+      cacher = new Cacher(option)
+    }
   }
 
   const unCacheMethods = [
@@ -66,12 +72,14 @@ export default function wrapper(instance, option) {
               Can read the HTTP headers and status codes here
               to determine whether or not it should be cached, purged, etc.
             */
-            const statusCode = response.status
-            const cacheControl = response.headers['cache-control'] || null
-            const lastModified = response.headers['last-modified'] || null
-            const etag = response.headers['etag'] || null
-            if (response.status < 400) {  // should just check for 304
-              cacher.setCache(option, response)
+            if (response.status <= 400) {
+                cacher.setCache(option, response)
+            } else if (response.status == 304) {
+              const cacheConfig = parseCacheControl(response.headers['cache-control'])
+              if (cacheConfig['max-age'] > 0) {
+                option.ttl = cacheConfig['max-age']
+                cacher.setCache(option, response)
+              }
             }
             return {data: response.data, status: response.status, statusText: response.statusText, headers: response.headers}
           })
